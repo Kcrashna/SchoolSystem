@@ -67,6 +67,24 @@ interface HealthRecord {
   recordedBy: string;
 }
 
+interface ParentsRecord {
+  id: number;
+  date: string;
+  totalMeetings: number;
+  meetingsAttended: number;
+  review: string;
+  recordedBy: string;
+}
+
+interface ECARecord {
+  id: number;
+  date: string;
+  activity: string;
+  rating: number;
+  comments: string;
+  recordedBy: string;
+}
+
 // Student marks data for individual analysis
 const studentMarksData: StudentMarksDataType = {
   "Ronisha Shrestha": {
@@ -222,6 +240,18 @@ export default function StudentAnalysisPage() {
   const [treatment, setTreatment] = useState("")
   const [medication, setMedication] = useState("")
   const [healthNotes, setHealthNotes] = useState("")
+  const [showParentsForm, setShowParentsForm] = useState(false)
+  const [parentsRecords, setParentsRecords] = useState<ParentsRecord[]>([])
+  const [parentsDate, setParentsDate] = useState("")
+  const [totalMeetings, setTotalMeetings] = useState("")
+  const [meetingsAttended, setMeetingsAttended] = useState("")
+  const [parentsReview, setParentsReview] = useState("")
+  const [showECAForm, setShowECAForm] = useState(false)
+  const [ecaRecords, setEcaRecords] = useState<ECARecord[]>([])
+  const [ecaDate, setEcaDate] = useState("")
+  const [ecaActivity, setEcaActivity] = useState("")
+  const [ecaRating, setEcaRating] = useState("")
+  const [ecaComments, setEcaComments] = useState("")
 
   useEffect(() => {
     const data = studentMarksData[studentName] || getDefaultStudentData(studentName)
@@ -307,6 +337,60 @@ export default function StudentAnalysisPage() {
     setHealthNotes("")
     setShowHealthForm(false)
     alert("Health record saved successfully!")
+  }
+
+  const handleSaveParents = () => {
+    // Validate required fields
+    if (!parentsDate || !totalMeetings || !meetingsAttended || !parentsReview) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    const newRecord: ParentsRecord = {
+      id: Date.now(),
+      date: parentsDate,
+      totalMeetings: parseInt(totalMeetings),
+      meetingsAttended: parseInt(meetingsAttended),
+      review: parentsReview,
+      recordedBy: currentUser,
+    }
+
+    setParentsRecords((prev) => [newRecord, ...prev])
+
+    // Reset form
+    setParentsDate("")
+    setTotalMeetings("")
+    setMeetingsAttended("")
+    setParentsReview("")
+    setShowParentsForm(false)
+    alert("Parents record saved successfully!")
+  }
+
+  const handleSaveECA = () => {
+    // Validate required fields
+    if (!ecaDate || !ecaActivity || !ecaRating || !ecaComments) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    const newRecord: ECARecord = {
+      id: Date.now(),
+      date: ecaDate,
+      activity: ecaActivity,
+      rating: parseInt(ecaRating),
+      comments: ecaComments,
+      recordedBy: currentUser,
+    }
+
+    setEcaRecords((prev) => [newRecord, ...prev])
+
+    // Reset form
+    setEcaDate("")
+    setEcaActivity("")
+    setEcaRating("")
+    setEcaComments("")
+    setShowECAForm(false)
+    alert("ECA record saved successfully!")
   }
 
   return (
@@ -692,6 +776,265 @@ export default function StudentAnalysisPage() {
           </CardContent>
         </Card>
 
+        {/* Add Parents Record */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle 
+                  className="flex items-center gap-2 cursor-pointer" 
+                  onClick={() => setShowParentsForm(!showParentsForm)}
+                >
+                  {showParentsForm ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <Plus className="h-5 w-5" />
+                  )}
+                  Add Parents Record
+                </CardTitle>
+                <CardDescription>Record and view parent meeting details for {studentName}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Parents Records List */}
+            {parentsRecords.length > 0 && !showParentsForm && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Previous Parents Records</h3>
+                <div className="space-y-4">
+                  {parentsRecords.map((record) => (
+                    <div key={record.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
+                        <div>
+                          <span className="text-sm text-gray-600">Date:</span>
+                          <p className="font-medium">{new Date(record.date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Total Meetings:</span>
+                          <p className="font-medium">{record.totalMeetings}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Meetings Attended:</span>
+                          <p className="font-medium">{record.meetingsAttended}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-sm text-gray-600">Review:</span>
+                        <p className="text-sm mt-1">{record.review}</p>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-600">
+                        Recorded by {record.recordedBy}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Parents Form */}
+            {showParentsForm && (
+              <div className="grid gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="parents-date">Date of Record *</Label>
+                    <Input
+                      id="parents-date"
+                      type="date"
+                      value={parentsDate}
+                      onChange={(e) => setParentsDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="total-meetings">Total Meetings *</Label>
+                    <Input
+                      id="total-meetings"
+                      type="number"
+                      min="0"
+                      placeholder="Enter total number of meetings"
+                      value={totalMeetings}
+                      onChange={(e) => setTotalMeetings(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="meetings-attended">Meetings Attended by Parent *</Label>
+                  <Input
+                    id="meetings-attended"
+                    type="number"
+                    min="0"
+                    placeholder="Enter number of meetings attended"
+                    value={meetingsAttended}
+                    onChange={(e) => setMeetingsAttended(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="parents-review">Review *</Label>
+                  <Textarea
+                    id="parents-review"
+                    placeholder="Write your review about parent's involvement..."
+                    value={parentsReview}
+                    onChange={(e) => setParentsReview(e.target.value)}
+                    className="min-h-[100px]"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setShowParentsForm(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveParents} className="gap-2">
+                    ✅ Save Record
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Add ECA Rating */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle 
+                  className="flex items-center gap-2 cursor-pointer" 
+                  onClick={() => setShowECAForm(!showECAForm)}
+                >
+                  {showECAForm ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <Plus className="h-5 w-5" />
+                  )}
+                  Add ECA Rating
+                </CardTitle>
+                <CardDescription>Record and view Extra-Curricular Activities performance for {studentName}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* ECA Records List */}
+            {ecaRecords.length > 0 && !showECAForm && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Previous ECA Records</h3>
+                <div className="space-y-4">
+                  {ecaRecords.map((record) => (
+                    <div key={record.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-2">
+                        <div>
+                          <span className="text-sm text-gray-600">Date:</span>
+                          <p className="font-medium">{new Date(record.date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Activity:</span>
+                          <p className="font-medium">{record.activity}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Rating:</span>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-4 h-4 rounded-full ${
+                                  i < record.rating ? "bg-yellow-400" : "bg-gray-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-sm text-gray-600">Comments:</span>
+                        <p className="text-sm mt-1">{record.comments}</p>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-600">
+                        Recorded by {record.recordedBy}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ECA Form */}
+            {showECAForm && (
+              <div className="grid gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="eca-date">Date of Record *</Label>
+                    <Input
+                      id="eca-date"
+                      type="date"
+                      value={ecaDate}
+                      onChange={(e) => setEcaDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="eca-activity">Activity *</Label>
+                    <Select value={ecaActivity} onValueChange={setEcaActivity} required>
+                      <SelectTrigger id="eca-activity">
+                        <SelectValue placeholder="Select activity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sports">Sports</SelectItem>
+                        <SelectItem value="music">Music</SelectItem>
+                        <SelectItem value="dance">Dance</SelectItem>
+                        <SelectItem value="art">Art</SelectItem>
+                        <SelectItem value="debate">Debate</SelectItem>
+                        <SelectItem value="clubs">Clubs</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="eca-rating">Rating *</Label>
+                  <Select value={ecaRating} onValueChange={setEcaRating} required>
+                    <SelectTrigger id="eca-rating">
+                      <SelectValue placeholder="Select rating" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">Excellent (5)</SelectItem>
+                      <SelectItem value="4">Very Good (4)</SelectItem>
+                      <SelectItem value="3">Good (3)</SelectItem>
+                      <SelectItem value="2">Fair (2)</SelectItem>
+                      <SelectItem value="1">Needs Improvement (1)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="eca-comments">Comments *</Label>
+                  <Textarea
+                    id="eca-comments"
+                    placeholder="Write your comments about the student's performance..."
+                    value={ecaComments}
+                    onChange={(e) => setEcaComments(e.target.value)}
+                    className="min-h-[100px]"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setShowECAForm(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveECA} className="gap-2">
+                    ✅ Save Record
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Student Performance Summary */}
         <Card>
           <CardHeader>
@@ -830,52 +1173,6 @@ export default function StudentAnalysisPage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Subject-wise Performance Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Detailed Subject Performance</CardTitle>
-            <CardDescription>Performance across all terms</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-4 py-2 text-left">Subject</th>
-                    <th className="border border-gray-300 px-4 py-2 text-center">First Term</th>
-                    <th className="border border-gray-300 px-4 py-2 text-center">Mid Term</th>
-                    <th className="border border-gray-300 px-4 py-2 text-center">Current Term</th>
-                    <th className="border border-gray-300 px-4 py-2 text-center">Trend</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjects.map((subject, index) => {
-                    const firstTerm = studentData.previousTerms[0][subject] as number
-                    const midTerm = studentData.previousTerms[1][subject] as number
-                    const currentTerm = studentData.currentTerm[subject] as number
-                    const trend = currentTerm - firstTerm
-
-                    return (
-                      <tr key={subject} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                        <td className="border border-gray-300 px-4 py-2 font-medium">{subject}</td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">{firstTerm}</td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">{midTerm}</td>
-                        <td className="border border-gray-300 px-4 py-2 text-center font-medium">{currentTerm}</td>
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <span className={`font-medium ${trend >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            {trend >= 0 ? "+" : ""}
-                            {trend}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

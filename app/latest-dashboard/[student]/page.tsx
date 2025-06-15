@@ -21,14 +21,22 @@ import {
   Legend,
 } from "recharts"
 
+const addressList = [
+  'Kathmandu', 'Bhaktapur', 'Lalitpur', 'Pokhara', 'Butwal', 'Biratnagar', 'Dharan', 'Nepalgunj', 'Hetauda', 'Janakpur',
+  'Dhangadhi', 'Bharatpur', 'Itahari', 'Birgunj', 'Gorkha', 'Chitwan', 'Palpa', 'Bhairahawa', 'Tansen', 'Damak', 'Banepa',
+  'Bardiya', 'Surkhet', 'Kanchanpur', 'Syangja', 'Parsa', 'Makwanpur', 'Nawalparasi', 'Kavre', 'Rupandehi', 'Sunsari'
+];
+
 // Student marks data from the provided table
-const studentMarksData = [
+let studentMarksData: any[] = [
   {
     name: "Ronisha Shrestha",
     rank: 1,
     percentage: 94.8,
     grade: "A",
     result: "PASS",
+    rollNo: "01",
+    address: "Kathmandu",
     subjects: {
       COMP: { TH: 49, PR: 49, Total: 98 },
       ENGL: { TH: 42, PR: 47, Total: 89 },
@@ -46,6 +54,8 @@ const studentMarksData = [
     percentage: 92.5,
     grade: "A",
     result: "PASS",
+    rollNo: "02",
+    address: "Bhaktapur",
     subjects: {
       COMP: { TH: 49.5, PR: 49, Total: 98.5 },
       ENGL: { TH: 41.5, PR: 47, Total: 88.5 },
@@ -63,6 +73,8 @@ const studentMarksData = [
     percentage: 91.0,
     grade: "A",
     result: "PASS",
+    rollNo: "03",
+    address: "Lalitpur",
     subjects: {
       COMP: { TH: 49, PR: 49, Total: 98 },
       ENGL: { TH: 40, PR: 47, Total: 87 },
@@ -261,7 +273,12 @@ const studentMarksData = [
       SCIE: { TH: 12, PR: 30, Total: 42 },
     },
   },
-]
+];
+studentMarksData = studentMarksData.map((student, idx) => ({
+  ...student,
+  rollNo: student.rollNo || String(student.rank || idx + 1).padStart(2, '0'),
+  address: student.address || addressList[idx % addressList.length],
+}));
 
 // Rank grade data for each student and subject
 const rankGradeData = {
@@ -597,16 +614,16 @@ const calculateClassStats = () => {
 
   studentMarksData.forEach((student) => {
     Object.keys(student.subjects).forEach((subject) => {
-      if (student.subjects[subject].Total > highestMarks[subject]) {
-        highestMarks[subject] = student.subjects[subject].Total
+      if ((student.subjects as any)[subject].Total > (highestMarks as any)[subject]) {
+        (highestMarks as any)[subject] = (student.subjects as any)[subject].Total
       }
-      totalMarks[subject] += student.subjects[subject].Total
+      (totalMarks as any)[subject] += (student.subjects as any)[subject].Total
     })
   })
 
   const averageMarks = {}
   Object.keys(totalMarks).forEach((subject) => {
-    averageMarks[subject] = Math.round((totalMarks[subject] / totalStudents) * 10) / 10
+    averageMarks[subject] = Math.round(((totalMarks as any)[subject] / totalStudents) * 10) / 10
   })
 
   return { highestMarks, averageMarks }
@@ -614,11 +631,117 @@ const calculateClassStats = () => {
 
 const { highestMarks, averageMarks } = calculateClassStats()
 
+// Marksheet component for the template
+function Marksheet({ student }: { student: any }) {
+  // Map subject keys to display names and order
+  const subjectOrder = [
+    { key: 'ENGL', label: 'English' },
+    { key: 'MATH', label: 'Math' },
+    { key: 'SCIE', label: 'Science' },
+    { key: 'COMP', label: 'Computer' },
+    { key: 'NEPA', label: 'Nepali' },
+    { key: 'SAMA', label: 'Social' },
+  ];
+
+  // Helper to get value or dash
+  const getVal = (val: any) => (val !== undefined && val !== null ? val : '-');
+
+  // Calculate totals
+  let grandTotal = 0;
+  subjectOrder.forEach(({ key }) => {
+    if (student.subjects[key]) grandTotal += student.subjects[key].Total;
+  });
+
+  // Attendance
+  const attendance = student.attendance || '325 days';
+  // GPA (if not present, calculate from percentage)
+  const gpa = student.gpa || (student.percentage ? (Math.round((student.percentage / 25) * 100) / 100).toFixed(2) : '-');
+
+  return (
+    <div className="max-w-3xl mx-auto border p-6 bg-white text-black text-sm leading-tight font-serif mb-8">
+      {/* Logo and school name/address */}
+      <div className="flex items-center mb-2">
+        <div className="w-20 h-20 flex-shrink-0 flex items-center justify-center">
+          <img src="/api-school-logo.png" alt="API School Logo" className="w-16 h-16 object-contain" />
+        </div>
+        <div className="flex-1 text-center">
+          <div className="font-bold text-base">API School</div>
+          <div>Dhapasi Height, Kathmandu</div>
+        </div>
+      </div>
+      <h2 className="text-center text-lg font-bold uppercase underline mb-2">FINAL EXAMINATION MARKSHEET</h2>
+      <div className="flex justify-between mb-2">
+        <div>
+          <p><strong>Name:</strong> {student.name}</p>
+          <p><strong>Section:</strong> A</p>
+        </div>
+        <div className="text-right">
+          <p><strong>Roll No:</strong> {getVal(student.rollNo) || student.rank}</p>
+          <p><strong>Address:</strong> {getVal(student.address) || 'Kathmandu'}</p>
+        </div>
+      </div>
+      <table className="w-full border border-collapse mb-4">
+        <thead>
+          <tr className="bg-gray-200 text-center">
+            <th rowSpan={2} className="border p-1">Subjects</th>
+            <th colSpan={2} className="border p-1">Full Marks</th>
+            <th colSpan={2} className="border p-1">Pass Marks</th>
+            <th colSpan={2} className="border p-1">Marks Obtained</th>
+            <th rowSpan={2} className="border p-1">Total</th>
+          </tr>
+          <tr className="bg-gray-200 text-center">
+            <th className="border p-1">Prac.</th>
+            <th className="border p-1">Final</th>
+            <th className="border p-1">Prac.</th>
+            <th className="border p-1">Final</th>
+            <th className="border p-1">Prac.</th>
+            <th className="border p-1">Final</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subjectOrder.map(({ key, label }) => {
+            const subj = student.subjects[key] || {};
+            // Assume full marks/prac/final: 25/75, pass: 8/32 for all, adjust as needed
+            return (
+              <tr key={key} className="text-center">
+                <td className="border p-1 text-left">{label}</td>
+                <td className="border p-1">25</td>
+                <td className="border p-1">75</td>
+                <td className="border p-1">8</td>
+                <td className="border p-1">32</td>
+                <td className="border p-1">{getVal(subj.PR)}</td>
+                <td className="border p-1">{getVal(subj.TH)}</td>
+                <td className="border p-1 font-semibold">{getVal(subj.Total)}</td>
+              </tr>
+            );
+          })}
+          {/* Attendance */}
+          <tr className="text-center">
+            <td className="border p-1 text-left">Attendance</td>
+            <td className="border p-1" colSpan={6}>{attendance}</td>
+            <td className="border p-1 font-semibold">{attendance}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="flex flex-wrap justify-between gap-2">
+        <p><strong>Grand Total:</strong> {grandTotal}</p>
+        <p><strong>GPA:</strong> {gpa}</p>
+        <p><strong>Grade:</strong> {getVal(student.grade)}</p>
+        <p><strong>Position Secured:</strong> {student.rank}<sup>{student.rank === 1 ? 'st' : student.rank === 2 ? 'nd' : student.rank === 3 ? 'rd' : 'th'}</sup></p>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2">
+        <p><strong>Percentage:</strong> {getVal(student.percentage)}%</p>
+        <p><strong>Result:</strong> {student.result === 'PASS' ? 'Passed' : 'Failed'}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function LatestDashboardPage() {
   const params = useParams()
   const router = useRouter()
   const studentName = decodeURIComponent(params.student as string)
-  const [studentData, setStudentData] = useState(null)
+  const [studentData, setStudentData] = useState<any>(null)
 
   useEffect(() => {
     const student = studentMarksData.find((s) => s.name === studentName)
@@ -635,8 +758,8 @@ export default function LatestDashboardPage() {
   }
 
   // Prepare radar chart data
-  const radarData = Object.keys(studentData.subjects).map((subject) => {
-    const percentage = (studentData.subjects[subject].Total / 100) * 100
+  const radarData = Object.keys((studentData as any).subjects).map((subject) => {
+    const percentage = ((studentData as any).subjects[subject].Total / 100) * 100
     return {
       subject,
       value: Math.min(percentage, 100),
@@ -644,8 +767,8 @@ export default function LatestDashboardPage() {
   })
 
   // Prepare comparison with highest score data
-  const highestScoreData = Object.keys(studentData.subjects).map((subject) => {
-    const studentTotal = studentData.subjects[subject].Total
+  const highestScoreData = Object.keys((studentData as any).subjects).map((subject) => {
+    const studentTotal = (studentData as any).subjects[subject].Total
     const highestTotal = highestMarks[subject]
     const deviation = studentTotal - highestTotal
 
@@ -658,8 +781,8 @@ export default function LatestDashboardPage() {
   })
 
   // Prepare comparison with average score data
-  const averageScoreData = Object.keys(studentData.subjects).map((subject) => {
-    const studentTotal = studentData.subjects[subject].Total
+  const averageScoreData = Object.keys((studentData as any).subjects).map((subject) => {
+    const studentTotal = (studentData as any).subjects[subject].Total
     const avgTotal = averageMarks[subject]
     const deviation = studentTotal - avgTotal
 
@@ -677,12 +800,12 @@ export default function LatestDashboardPage() {
 
   // Get subject teacher reviews - Enhanced to show all available subject reviews
   const getAllSubjectReviews = () => {
-    const allReviews = []
+    const allReviews: any[] = []
     const subjects = ["mathematics", "science"] // Available subjects with teachers
 
     subjects.forEach((subject) => {
-      const reviews = JSON.parse(localStorage.getItem(`reviews_${subject}_${studentData.name}`) || "[]")
-      reviews.forEach((review) => {
+      const reviews = JSON.parse(localStorage.getItem(`reviews_${subject}_${(studentData as any).name}`) || "[]")
+      reviews.forEach((review: any) => {
         allReviews.push({
           ...review,
           subject: subject,
@@ -699,19 +822,16 @@ export default function LatestDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-red-600 text-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={handleBackClick} className="text-white gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Student List
-          </Button>
-          <h1 className="text-xl font-bold text-center flex-1">
-            MARKSHEET ANALYSIS OF SECOND TERMINAL EXAM OF GRADE 8 (HERCULES)
-          </h1>
-        </div>
-      </header>
+      {/* First Page: Marksheet */}
+      <Marksheet student={studentData} />
+      <div className="break-after-page" />
 
+      {/* Second Page: Red Header, then Info Cards, then Analysis */}
+      <header className="bg-red-600 text-white px-6 py-4">
+        <h1 className="text-xl font-bold text-center flex-1">
+          MARKSHEET ANALYSIS OF SECOND TERMINAL EXAM OF GRADE 8 (HERCULES)
+        </h1>
+      </header>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         {/* Student Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -797,16 +917,16 @@ export default function LatestDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(studentData.subjects).map(([subject, marks], index) => {
+                  {Object.entries((studentData as any).subjects).map(([subject, marks], index) => {
                     const mappedSubject = getSubjectMapping(subject)
-                    const rankGrade = rankGradeData[studentData.name]?.[mappedSubject] || "A"
+                    const rankGrade = rankGradeData[(studentData as any).name]?.[mappedSubject as any] || "A"
 
                     return (
                       <tr key={subject} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                         <td className="p-2 border">{subject}</td>
-                        <td className="p-2 border text-center">{marks.TH}</td>
-                        <td className="p-2 border text-center">{marks.PR}</td>
-                        <td className="p-2 border text-center">{marks.Total}</td>
+                        <td className="p-2 border text-center">{(marks as any).TH}</td>
+                        <td className="p-2 border text-center">{(marks as any).PR}</td>
+                        <td className="p-2 border text-center">{(marks as any).Total}</td>
                         <td className="p-2 border text-center">
                           <span
                             className={`inline-block px-3 py-1 ${getRankGradeColor(rankGrade)} text-white font-bold rounded`}
